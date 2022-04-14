@@ -1,6 +1,14 @@
 {
   "name": "@umijs/request2type",
   "version": "0.1.0",
+  "main": "./lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "author": {
+    "name": "xiefengnian",
+    "email": "xieniangao@126.com"
+  },
   "scripts": {
     "start": "father-build build -w",
     "build": "father-build build",
