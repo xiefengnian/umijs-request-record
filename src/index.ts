@@ -8,7 +8,7 @@ import {
 } from 'fs';
 import { join } from 'path';
 import './utils';
-import { JSON2TS } from './utils';
+import { getType, JSON2TS } from './utils';
 import { throttle, cloneDeep } from 'lodash';
 import prettier from 'prettier';
 
@@ -94,10 +94,7 @@ class Core {
     const { query, res, payload } = data;
     const [method, pathname] = cacheKey.split(' ');
     const getInterfaceName = (type) => {
-      return `${method}_${pathname.replace(/([A-Z])/g, '_$1')}_${type}`
-        .replace(/\//g, '_')
-        .replace('__', '_')
-        .toUpperCase();
+      return getType(method, pathname, type);
     };
     const queryType = JSON2TS(query, { typeName: getInterfaceName('query') });
     const payloadType = JSON2TS(payload, {
@@ -114,8 +111,6 @@ class Core {
       ...this.cache,
       [cacheKey]: dataWithType,
     };
-
-    console.log(this.cache);
 
     this.save();
     this.onAdd();

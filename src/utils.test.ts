@@ -1,4 +1,4 @@
-import { object2Type } from './utils';
+import { getType, object2Type } from './utils';
 import prettier from 'prettier';
 
 describe('object 2 type should work fine', () => {
@@ -36,6 +36,14 @@ export type Test = {
   }[];
   g: boolean;
 };`.trim()
+    );
+  });
+});
+
+describe('getType should work fine', () => {
+  it('pathname with dot', () => {
+    expect(getType('get', '/api/v1/user.info', 'res')).toEqual(
+      'GET_API_V1_USER_INFO_RES'
     );
   });
 });

@@ -81,3 +81,11 @@ export const object2Type = (object: Record<any, any>, options: Options) => {
     typeName: options.typeName,
   });
 };
+
+export const getType = (method, pathname, type) => {
+  return `${method}_${pathname.replace(/([A-Z])/g, '_$1')}_${type}`
+    .replace(/\//g, '_')
+    .replace('__', '_')
+    .replace(/\./g, '_')
+    .toUpperCase();
+};
