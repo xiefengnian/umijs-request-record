@@ -1,6 +1,6 @@
 {
   "name": "@umijs/request2type",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "./lib/index.js",
   "files": [
     "lib"
