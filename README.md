@@ -15,7 +15,11 @@ $ yarn add @umijs/request2type --dev
 1. add handler in umi config file.
 
 ```ts
-import { EventHandler } from '@umijs/request2type';
+import Request2Type from '@umijs/request2type';
+
+const { EventHandler } = new Request2Type({
+  ready: true,
+});
 
 export default {
   proxy: {
@@ -36,10 +40,10 @@ export default {
 }
 ```
 
-3. start with node env
+3. start umi dev
 
 ```shell
-$ REQUEST_LISTEN=1 umi dev
+$ umi dev
 ```
 
 4. use type in request, all types export from namespace `API`
