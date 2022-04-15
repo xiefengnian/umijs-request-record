@@ -1,5 +1,6 @@
 type JSON2TSOptions = {
   typeName: string;
+  comment?: boolean;
 };
 
 const JSONStringifyWithoutQuotes = (object: Record<any, any>) => {
@@ -23,7 +24,7 @@ export const JSON2TS = (
   json: string | Record<any, any>,
   options: JSON2TSOptions
 ) => {
-  const { typeName } = options;
+  const { typeName, comment } = options;
 
   const data: Record<any, any> =
     typeof json === 'string' ? JSON.parse(json) : json;
@@ -68,7 +69,18 @@ export type ${typeName} = {
   ${Object.keys(typeObject)
     .map(
       (key) =>
-        `${key}: ${
+        `${
+          comment
+            ? `/** example: ${
+                typeof json[key] === 'object'
+                  ? JSON.stringify(json[key])
+                      .replace(/(:)/g, '$1 ')
+                      .replace(/(,)/g, '$1 ')
+                  : json[key]
+              } */`
+            : ''
+        }
+        ${key}: ${
           typeof typeObject[key] === 'object'
             ? JSONStringifyWithoutQuotes(typeObject[key])
             : typeObject[key]
