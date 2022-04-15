@@ -32,9 +32,12 @@ class Config {
       namespace: 'API',
     };
   }
-  setConfig(userConfig: ConfigType) {
-    this.config = userConfig;
-  }
+  setConfig = (userConfig: ConfigType) => {
+    this.config = {
+      ...this.config,
+      ...userConfig,
+    };
+  };
   getConfig = () => this.config;
 }
 

@@ -35,7 +35,16 @@ export const JSON2TS = (
 
       switch (typeof value) {
         case 'object': {
+          if (value === null) {
+            currentObject[key] = 'null';
+            break;
+          }
           if (Array.isArray(value)) {
+            const value0 = value[0];
+            if (value0 === null) {
+              currentObject[key] = 'null[]';
+              break;
+            }
             currentObject[key] =
               typeof value[0] === 'object'
                 ? `${JSONStringifyWithoutQuotes(fn(value[0]))}[]`
