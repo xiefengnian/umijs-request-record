@@ -31,10 +31,15 @@ export class Config {
     this.createInitialFile();
   }
   createInitialFile = () => {
-    const { outputDir } = this.config;
+    const { outputDir, mock } = this.config;
+    const { outputDir: mockOutputDir = './mock' } = mock;
     const finalOutputDir = join(process.cwd(), outputDir);
     if (!existsSync(finalOutputDir)) {
       mkdirSync(finalOutputDir, { recursive: true });
+    }
+    const finalMockOutputDir = join(process.cwd(), mockOutputDir);
+    if (!existsSync(finalMockOutputDir)) {
+      mkdirSync(finalMockOutputDir, { recursive: true });
     }
     const cacheDir = this.getCacheDir();
     const cacheFilePath = this.getCacheFilePath();
