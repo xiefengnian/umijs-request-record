@@ -3,6 +3,7 @@ import './utils';
 import { getType, JSON2TS } from './utils';
 import { throttle, cloneDeep } from 'lodash';
 import prettier from 'prettier';
+import { ConfigType } from './config';
 
 export type CacheDataType = {
   query: Record<any, any>;
@@ -28,6 +29,7 @@ export class Core {
       comment: boolean;
       namespace: string;
       mock: boolean;
+      role?: ConfigType['role'];
     }
   ) {
     this.cache = JSON.parse(
@@ -48,6 +50,8 @@ export class Core {
     ) {
       return;
     }
+
+    console.log('[request record]', cacheKey);
 
     const { query, res, payload } = data;
     const [method, pathname] = cacheKey.split(' ');
@@ -103,7 +107,7 @@ export class Core {
       this.options.outputFilePath,
       prettier.format(
         `
-      namespace ${this.options.namespace}{
+      export namespace ${this.options.namespace}{
         ${content.join('\n')}
       }
     `,
@@ -113,8 +117,6 @@ export class Core {
       (err) => {
         if (err) {
           console.log(err);
-        } else {
-          console.log('done write ts file.');
         }
       }
     );
@@ -136,8 +138,6 @@ export class Core {
         (err) => {
           if (err) {
             console.log(err);
-          } else {
-            console.log('done write mock file');
           }
         }
       );

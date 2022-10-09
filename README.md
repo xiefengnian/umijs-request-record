@@ -19,6 +19,7 @@ import Request2Type from '@umijs/request2type';
 
 const { EventHandler } = new Request2Type({
   ready: true,
+  mock: true,
 });
 
 export default {
@@ -55,3 +56,5 @@ const getUserInfo = (query: API.GET_API_USER_INFO_QUERY) => {
   );
 };
 ```
+
+5. mock file output in `./mock/api.mock.js`

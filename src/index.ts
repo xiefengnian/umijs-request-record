@@ -2,19 +2,38 @@ import { parse } from 'url';
 import './utils';
 import { Config, ConfigType } from './config';
 import { Core } from './core';
+import { unzip } from 'zlib';
 
 const PAYLOAD_NAME = '__payload';
 
-const parseBody = (incomingMessage) =>
+type ParseBodyOptions = {
+  contentEncoding: string;
+};
+
+const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
   new Promise<Record<any, any>>((resolve, reject) => {
     let chunks = [];
     incomingMessage.on('data', (chunk) => {
       chunks.push(chunk);
     });
     incomingMessage.on('end', () => {
-      const body = Buffer.concat(chunks).toString();
+      const body = Buffer.concat(chunks);
+      if (options?.contentEncoding) {
+        unzip(body, (err, result) => {
+          if (err) {
+            reject(err);
+          } else {
+            try {
+              resolve(JSON.parse(result.toString('utf-8')));
+            } catch (error) {
+              resolve({});
+            }
+          }
+        });
+        return;
+      }
       try {
-        resolve(JSON.parse(body));
+        resolve(JSON.parse(body.toString('utf-8')));
       } catch (error) {
         resolve({});
       }
@@ -24,11 +43,12 @@ const parseBody = (incomingMessage) =>
 export default class Main {
   private config: Config;
   private core: Core;
+  private successFilter: ConfigType['successFilter'];
   constructor(config: ConfigType) {
     this.config = new Config(config);
     const initialConfig = this.config.getConfig();
     if (initialConfig.ready) {
-      console.log('>>> start create typescript file');
+      console.log('[request record] start');
     }
     this.core = new Core({
       cacheFilePath: this.config.getCacheFilePath(),
@@ -37,7 +57,9 @@ export default class Main {
       namespace: initialConfig.namespace,
       mock: !!initialConfig.mock,
       mockFilePath: this.config.getMockFilePath(),
+      role: this.config.getRole(),
     });
+    this.successFilter = this.config.getSuccessFilter();
   }
   EventHandler = {
     onProxyReq: (proxyReq, req) => {
@@ -58,16 +80,31 @@ export default class Main {
     },
     onProxyRes: (proxyRes, req, res) => {
       if (this.config.getConfig().ready && res.statusCode !== 304) {
-        parseBody(proxyRes).then((responseData) => {
+        parseBody(proxyRes, {
+          contentEncoding: proxyRes.headers['content-encoding'],
+        }).then((responseData) => {
           const method = req.method;
           const pathname = parse(req.url).pathname;
-          this.core.add(Core.createCacheKey(method, pathname), {
-            res: responseData,
-            query: req.query,
-            payload: req[PAYLOAD_NAME],
-          });
+
+          const successFunction = () => {
+            this.core.add(Core.createCacheKey(method, pathname), {
+              res: responseData,
+              query: req.query,
+              payload: req[PAYLOAD_NAME],
+            });
+          };
+
+          if (this.successFilter) {
+            if (this.successFilter(responseData)) {
+              successFunction();
+            }
+          } else {
+            successFunction();
+          }
         });
       }
     },
   };
 }
+
+export { Mock } from './mock';

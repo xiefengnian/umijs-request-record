@@ -110,3 +110,10 @@ export const getType = (method, pathname, type) => {
     .replace(/\./g, '_')
     .toUpperCase();
 };
+
+export const resolePathWithRole = (originPath: string, role?: string) => {
+  if (!role) {
+    return originPath.replace('[role].', '');
+  }
+  return originPath.replace(`[role]`, role);
+};

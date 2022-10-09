@@ -1,10 +1,11 @@
 {
-  "name": "@umijs/request2type",
-  "version": "0.1.1",
+  "name": "@alipay/request-record",
+  "version": "0.1.0-0",
   "main": "./lib/index.js",
   "files": [
     "lib"
   ],
+  "types": "./lib/index.d.ts",
   "author": {
     "name": "xiefengnian",
     "email": "xieniangao@126.com"
