@@ -56,7 +56,8 @@ export default class Main {
       comment: initialConfig.comment,
       namespace: initialConfig.namespace,
       mock: !!initialConfig.mock,
-      mockFilePath: this.config.getMockFilePath(),
+      mockCachePath: this.config.getMockCacheFilePath(),
+      mockOutputPath: this.config.getMockOutputFilePath(),
       role: this.config.getRole(),
     });
     this.successFilter = this.config.getSuccessFilter();

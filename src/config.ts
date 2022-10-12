@@ -3,15 +3,15 @@ import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { resolePathWithRole } from './utils';
 export type ConfigType = {
   mock?: {
-    /** default: ~/mock */
+    /** default: ./mock */
     outputDir?: string;
-    /** default: "api.[role].mock.js", */
+    /** default: "requestRecord.mock.js", */
     fileName?: string;
   };
   type?: boolean;
   namespace?: string;
   comment?: boolean;
-  /** default: ~/types */
+  /** default: ./types */
   outputDir?: string;
   ready?: boolean;
   successFilter?: (response: Record<any, any>) => boolean;
@@ -56,9 +56,16 @@ export class Config {
     }
   };
   getConfig = () => this.config;
-  getMockFilePath = () => {
+  getMockCacheFilePath = () => {
+    return join(
+      this.getCacheDir(),
+      'mock',
+      resolePathWithRole('./[role].mock.cache.js', this.config.role)
+    );
+  };
+  getMockOutputFilePath = () => {
     if (this.config.mock) {
-      const { fileName = 'api.[role].mock.js', outputDir = './mock' } =
+      const { fileName = 'requestRecord.mock.js', outputDir = './mock' } =
         this.config.mock;
       const role = this.config.role;
 
@@ -66,7 +73,7 @@ export class Config {
     }
   };
   getTypeFilePath = () => {
-    const { outputDir = './types' } = this.config;
+    const { outputDir } = this.config;
     return join(process.cwd(), outputDir, `./index.ts`);
   };
   getCacheFilePath = () => {

@@ -15,12 +15,17 @@ $ yarn add @umijs/request2type --dev
 1. add handler in umi config file.
 
 ```ts
-import Request2Type from '@umijs/request2type';
+import RequestRecord, { Mock } from '@alipay/request-record';
 
-const { EventHandler } = new Request2Type({
+const { EventHandler } = new RequestRecord({
   ready: true,
+  role: 'audit',
   mock: true,
 });
+
+const mock = new Mock();
+
+mock.useRole('audit');
 
 export default {
   proxy: {
@@ -57,4 +62,4 @@ const getUserInfo = (query: API.GET_API_USER_INFO_QUERY) => {
 };
 ```
 
-5. mock file output in `./mock/api.mock.js`
+5. mock file output in `./mock/requestRecord.mock.js`

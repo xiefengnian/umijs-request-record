@@ -1,4 +1,11 @@
-import { writeFile, readFileSync, writeFileSync } from 'fs';
+import {
+  writeFile,
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+} from 'fs';
+import { dirname } from 'path';
 import './utils';
 import { getType, JSON2TS } from './utils';
 import { throttle, cloneDeep } from 'lodash';
@@ -25,7 +32,8 @@ export class Core {
     private options: {
       cacheFilePath: string;
       outputFilePath: string;
-      mockFilePath: string;
+      mockOutputPath: string;
+      mockCachePath: string;
       comment: boolean;
       namespace: string;
       mock: boolean;
@@ -35,6 +43,13 @@ export class Core {
     this.cache = JSON.parse(
       readFileSync(this.options.cacheFilePath, 'utf8') || `{}`
     );
+    if (!existsSync(this.options.mockCachePath)) {
+      const mockCacheDir = dirname(this.options.mockCachePath);
+      if (!existsSync(mockCacheDir)) {
+        mkdirSync(mockCacheDir, { recursive: true });
+      }
+      writeFileSync(this.options.mockCachePath, '');
+    }
   }
 
   add(cacheKey: string, data: CacheDataType) {
@@ -122,25 +137,19 @@ export class Core {
     );
     /** mock file */
     if (this.options.mock) {
-      writeFile(
-        this.options.mockFilePath,
-        prettier.format(
-          'module.exports = {' +
-            Object.keys(cache)
-              .map((key) => {
-                const { res } = cache[key];
-                return `'${key}': ${JSON.stringify(res)}`;
-              })
-              .join(',\n') +
-            '}',
-          { parser: 'babel' }
-        ),
-        (err) => {
-          if (err) {
-            console.log(err);
-          }
-        }
+      const mockContent = prettier.format(
+        'module.exports = {' +
+          Object.keys(cache)
+            .map((key) => {
+              const { res } = cache[key];
+              return `'${key}': ${JSON.stringify(res)}`;
+            })
+            .join(',\n') +
+          '}',
+        { parser: 'babel' }
       );
+
+      writeFileSync(this.options.mockCachePath, mockContent);
     }
   };
 }
