@@ -1,29 +1,32 @@
 {
   "name": "@alipay/request-record",
   "version": "0.1.0-1",
-  "main": "./lib/index.js",
-  "files": [
-    "lib"
-  ],
-  "types": "./lib/index.d.ts",
   "author": {
     "name": "xiefengnian",
     "email": "xieniangao@126.com"
   },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
   "scripts": {
-    "start": "father-build build -w",
-    "build": "father-build build",
+    "build": "father build",
+    "start": "father dev",
     "test": "jest"
-  },
-  "devDependencies": {
-    "@types/jest": "^27.4.1",
-    "father-build": "^1.22.1",
-    "jest": "^27.5.1",
-    "ts-jest": "^27.1.4"
   },
   "dependencies": {
     "chokidar": "^3.5.3",
     "prettier": "^2.6.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "father": "^4.1.0",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.4"
+  },
+  "peerDependencies": {
+    "umi": ">=3"
   },
   "publishConfig": {
     "registry": "https://registry.npm.alibaba-inc.com"

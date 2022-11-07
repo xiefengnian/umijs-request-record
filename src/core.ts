@@ -1,16 +1,16 @@
 import {
-  writeFile,
-  readFileSync,
-  writeFileSync,
   existsSync,
   mkdirSync,
+  readFileSync,
+  writeFile,
+  writeFileSync,
 } from 'fs';
+import { cloneDeep, throttle } from 'lodash';
 import { dirname } from 'path';
-import './utils';
-import { getType, JSON2TS } from './utils';
-import { throttle, cloneDeep } from 'lodash';
 import prettier from 'prettier';
 import { ConfigType } from './config';
+import './utils';
+import { getType, JSON2TS } from './utils';
 
 export type CacheDataType = {
   query: Record<any, any>;
@@ -66,7 +66,7 @@ export class Core {
       return;
     }
 
-    console.log('[request record]', cacheKey);
+    console.log(`[Request Record] add - ${cacheKey}`);
 
     const { query, res, payload } = data;
     const [method, pathname] = cacheKey.split(' ');
@@ -135,6 +135,10 @@ export class Core {
         }
       }
     );
+    this.generateMock();
+  };
+  generateMock = () => {
+    const cache = this.cache;
     /** mock file */
     if (this.options.mock) {
       const mockContent = prettier.format(
@@ -150,6 +154,10 @@ export class Core {
       );
 
       writeFileSync(this.options.mockCachePath, mockContent);
+      writeFileSync(
+        this.options.mockOutputPath,
+        `// from: ${this.options.mockCachePath}\n` + mockContent
+      );
     }
   };
 }

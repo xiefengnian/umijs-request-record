@@ -1,8 +1,8 @@
 import { parse } from 'url';
-import './utils';
+import { unzip } from 'zlib';
 import { Config, ConfigType } from './config';
 import { Core } from './core';
-import { unzip } from 'zlib';
+import './utils';
 
 const PAYLOAD_NAME = '__payload';
 
@@ -47,9 +47,7 @@ export default class Main {
   constructor(config: ConfigType) {
     this.config = new Config(config);
     const initialConfig = this.config.getConfig();
-    if (initialConfig.ready) {
-      console.log('[request record] start');
-    }
+
     this.core = new Core({
       cacheFilePath: this.config.getCacheFilePath(),
       outputFilePath: this.config.getTypeFilePath(),
@@ -61,6 +59,11 @@ export default class Main {
       role: this.config.getRole(),
     });
     this.successFilter = this.config.getSuccessFilter();
+
+    if (initialConfig.ready) {
+      console.log('[Request Record] ready');
+      this.core.generateMock();
+    }
   }
   EventHandler = {
     onProxyReq: (proxyReq, req) => {
