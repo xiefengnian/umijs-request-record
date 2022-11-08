@@ -12,7 +12,6 @@ export default (api: IApi) => {
           namespace: joi.string(),
           comment: joi.boolean(),
           outputDir: joi.string(),
-          ready: joi.boolean(),
           successFilter: joi.func(),
           role: joi.string(),
           mock: joi.object({
@@ -29,17 +28,26 @@ export default (api: IApi) => {
           usingRole: 'default',
         },
         outputDir: './types',
-        ready: true,
       },
     },
     enableBy: ({ userConfig }) => !!userConfig.proxy,
   });
+
+  api.registerCommand({
+    name: 'record',
+    fn({ args }) {
+      api.service.commands['dev'].fn({ args });
+    },
+  });
+
   api.modifyConfig((config) => {
     const { EventHandler } = new RequestRecord({
       ...api.userConfig.requestRecord,
       mock: {
         ...api.userConfig.requestRecord.mock,
       },
+      ready: api.name === 'record',
+      role: api.args.role,
     });
 
     const { proxy } = config;

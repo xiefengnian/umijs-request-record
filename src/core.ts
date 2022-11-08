@@ -1,3 +1,4 @@
+import * as chalk from 'chalk';
 import {
   existsSync,
   mkdirSync,
@@ -66,7 +67,7 @@ export class Core {
       return;
     }
 
-    console.log(`[Request Record] add - ${cacheKey}`);
+    console.log(`[Request Record] ${chalk.green(`add`)} - ${cacheKey}`);
 
     const { query, res, payload } = data;
     const [method, pathname] = cacheKey.split(' ');

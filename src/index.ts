@@ -1,3 +1,4 @@
+import * as chalk from 'chalk';
 import { parse } from 'url';
 import { unzip } from 'zlib';
 import { Config, ConfigType } from './config';
@@ -61,7 +62,9 @@ export default class Main {
     this.successFilter = this.config.getSuccessFilter();
 
     if (initialConfig.ready) {
-      console.log('[Request Record] ready');
+      console.log(
+        `[Request Record] ready with role=${chalk.green(this.config.getRole())}`
+      );
       this.core.generateMock();
     }
   }
