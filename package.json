@@ -1,12 +1,12 @@
 {
   "name": "@alipay/request-record",
-  "version": "0.1.0-3",
+  "version": "0.1.0-4",
   "author": {
     "name": "xiefengnian",
     "email": "xieniangao@126.com"
   },
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
   "files": [
     "lib"
   ],
