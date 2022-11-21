@@ -80,6 +80,7 @@ export default (api: IApi) => {
           },
         };
       }
+      return args;
     });
     return {
       ...config,
