@@ -1,5 +1,5 @@
 import type { IApi } from 'umi';
-import RequestRecord from './index';
+import { RequestRecord } from './index';
 
 export default (api: IApi) => {
   api.describe({

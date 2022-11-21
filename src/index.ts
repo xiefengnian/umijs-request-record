@@ -41,7 +41,7 @@ const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
     });
   });
 
-export default class Main {
+export class RequestRecord {
   private config: Config;
   private core: Core;
   private successFilter: ConfigType['successFilter'];
