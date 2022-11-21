@@ -1,117 +1,89 @@
-import * as chalk from 'chalk';
-import { parse } from 'url';
-import { unzip } from 'zlib';
-import { Config, ConfigType } from './config';
-import { Core } from './core';
-import './utils';
+import type { IApi } from 'umi';
+import { RequestRecord } from './record';
 
-const PAYLOAD_NAME = '__payload';
-
-type ParseBodyOptions = {
-  contentEncoding: string;
-};
-
-const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
-  new Promise<Record<any, any>>((resolve, reject) => {
-    let chunks = [];
-    incomingMessage.on('data', (chunk) => {
-      chunks.push(chunk);
-    });
-    incomingMessage.on('end', () => {
-      const body = Buffer.concat(chunks);
-      if (options?.contentEncoding) {
-        unzip(body, (err, result) => {
-          if (err) {
-            reject(err);
-          } else {
-            try {
-              resolve(JSON.parse(result.toString('utf-8')));
-            } catch (error) {
-              resolve({});
-            }
-          }
+export default (api: IApi) => {
+  api.describe({
+    key: 'requestRecord',
+    config: {
+      schema(joi) {
+        return joi.object({
+          fromProxy: joi.string(),
+          type: joi.boolean(),
+          namespace: joi.string(),
+          comment: joi.boolean(),
+          outputDir: joi.string(),
+          successFilter: joi.func(),
+          role: joi.string(),
+          mock: joi.object({
+            outputDir: joi.string(),
+            fileName: joi.string(),
+            usingRole: joi.string(),
+          }),
         });
-        return;
-      }
-      try {
-        resolve(JSON.parse(body.toString('utf-8')));
-      } catch (error) {
-        resolve({});
-      }
-    });
+      },
+      default: {
+        mock: {
+          outputDir: './mock',
+          fileName: 'requestRecord.mock.js',
+          usingRole: 'default',
+        },
+        outputDir: './types',
+      },
+    },
+    enableBy: ({ userConfig }) => !!userConfig.proxy,
   });
 
-export class RequestRecord {
-  private config: Config;
-  private core: Core;
-  private successFilter: ConfigType['successFilter'];
-  constructor(config: ConfigType) {
-    this.config = new Config(config);
-    const initialConfig = this.config.getConfig();
+  api.registerCommand({
+    name: 'record',
+    fn({ args }) {
+      api.service.commands['dev'].fn({ args });
+    },
+  });
 
-    this.core = new Core({
-      cacheFilePath: this.config.getCacheFilePath(),
-      outputFilePath: this.config.getTypeFilePath(),
-      comment: initialConfig.comment,
-      namespace: initialConfig.namespace,
-      mock: !!initialConfig.mock,
-      mockCachePath: this.config.getMockCacheFilePath(),
-      mockOutputPath: this.config.getMockOutputFilePath(),
-      role: this.config.getRole(),
+  api.modifyConfig((config) => {
+    const { EventHandler } = new RequestRecord({
+      ...api.userConfig.requestRecord,
+      mock: {
+        ...api.userConfig.requestRecord.mock,
+      },
+      ready: api.name === 'record',
+      role: api.args.role,
     });
-    this.successFilter = this.config.getSuccessFilter();
 
-    if (initialConfig.ready) {
-      console.log(
-        `[Request Record] ready with role=${chalk.green(this.config.getRole())}`
-      );
-      this.core.generateMock();
-    }
-  }
-  EventHandler = {
-    onProxyReq: (proxyReq, req) => {
-      if (this.config.getConfig().ready) {
-        if (req.headers['content-length']) {
-          // 表示存在body
-        }
-        if ((proxyReq.path as string).includes('?')) {
-          proxyReq.path = proxyReq.path + '&__rid__=' + Math.random();
-        } else {
-          proxyReq.path = proxyReq.path + '?__rid__=' + Math.random();
-        }
-        proxyReq.setHeader('if-none-match', '');
-        parseBody(req).then((body) => {
-          req[PAYLOAD_NAME] = body;
-        });
+    const { proxy } = config;
+    // Supported proxy types:
+    // proxy: { target, context }
+    // proxy: { '/api': { target, context } }
+    // proxy: [{ target, context }]
+    const newProxy = (
+      Array.isArray(proxy)
+        ? proxy
+        : proxy.target
+        ? [proxy]
+        : Object.keys(proxy).map((key) => {
+            return {
+              ...proxy[key],
+              context: key,
+            };
+          })
+    ).map((args) => {
+      if (args.context === api.userConfig.requestRecord.fromProxy) {
+        return {
+          ...args,
+          onProxyReq: (proxyReq: any, req: any) => {
+            EventHandler.onProxyReq(proxyReq, req);
+            args.onProxyReq?.(proxyReq, req);
+          },
+          onProxyRes: (proxyRes: any, req: any, res: any) => {
+            EventHandler.onProxyRes(proxyRes, req, res);
+            args.onProxyRes?.(proxyRes, req, res);
+          },
+        };
       }
-    },
-    onProxyRes: (proxyRes, req, res) => {
-      if (this.config.getConfig().ready && res.statusCode !== 304) {
-        parseBody(proxyRes, {
-          contentEncoding: proxyRes.headers['content-encoding'],
-        }).then((responseData) => {
-          const method = req.method;
-          const pathname = parse(req.url).pathname;
-
-          const successFunction = () => {
-            this.core.add(Core.createCacheKey(method, pathname), {
-              res: responseData,
-              query: req.query,
-              payload: req[PAYLOAD_NAME],
-            });
-          };
-
-          if (this.successFilter) {
-            if (this.successFilter(responseData)) {
-              successFunction();
-            }
-          } else {
-            successFunction();
-          }
-        });
-      }
-    },
-  };
-}
-
-export { Mock } from './mock';
+    });
+    return {
+      ...config,
+      proxy: newProxy,
+    };
+  });
+};

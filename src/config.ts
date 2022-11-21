@@ -1,5 +1,5 @@
-import { join } from 'path';
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import { resolePathWithRole } from './utils';
 export type ConfigType = {
   mock?: {
