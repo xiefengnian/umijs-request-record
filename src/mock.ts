@@ -1,14 +1,21 @@
 import express from 'express';
 import fs from 'fs';
+import { merge } from 'lodash';
 import { join } from 'path';
+
+type ArgsType = { port: number; scene: string };
+
 export class Mock {
-  static start = (
-    { port, scene }: { port: number; scene: string } = {
-      port: 7000,
-      scene: 'default',
-    }
-  ) =>
-    new Promise<{
+  static start = (args?: ArgsType) => {
+    const { port, scene } = merge(
+      {
+        port: 7000,
+        scene: 'default',
+      },
+      args
+    );
+
+    return new Promise<{
       close: () => void;
     }>((resolve, reject) => {
       const cachePath = join(
@@ -66,4 +73,5 @@ export class Mock {
         }
       });
     });
+  };
 }
