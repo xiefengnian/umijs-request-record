@@ -5,6 +5,29 @@ import { join } from 'path';
 
 type ArgsType = { port: number; scene: string };
 
+const getCachePath = (scene: string) => {
+  return join(
+    process.cwd(),
+    'types',
+    'cache',
+    'mock',
+    (scene === 'default' ? '' : `${scene}.`) + 'mock.cache.js'
+  );
+};
+
+export const switchScene = (newScene: string) =>
+  new Promise((reject, resolve) => {
+    const cachePath = getCachePath(newScene);
+    if (fs.existsSync(cachePath)) {
+      const mockFilePath = join(process.cwd(), 'mock', 'requestRecord.mock.js');
+
+      fs.writeFileSync(mockFilePath, require(cachePath), 'utf-8');
+      resolve();
+    } else {
+      reject(new Error(`mock cache file ${cachePath} not found`));
+    }
+  });
+
 export const startMock = (args?: ArgsType) => {
   const { port, scene } = merge(
     {
@@ -17,13 +40,7 @@ export const startMock = (args?: ArgsType) => {
   return new Promise<{
     close: () => void;
   }>((resolve, reject) => {
-    const cachePath = join(
-      process.cwd(),
-      'types',
-      'cache',
-      'mock',
-      (scene === 'default' ? '' : `${scene}.`) + 'mock.cache.js'
-    );
+    const cachePath = getCachePath(scene);
 
     if (!fs.existsSync(cachePath)) {
       reject(new Error(`mock cache file not found: ${cachePath}`));
