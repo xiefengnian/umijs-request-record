@@ -1,3 +1,5 @@
+import fs from 'fs';
+import { join } from 'path';
 import type { IApi } from 'umi';
 import { RequestRecord } from './record';
 
@@ -38,6 +40,13 @@ export default (api: IApi) => {
     fn({ args }) {
       api.service.commands['dev'].fn({ args });
     },
+  });
+
+  api.onGenerateFiles(async () => {
+    api.writeTmpFile({
+      content: fs.readFileSync(join(__dirname, '../../src/mock.ts'), 'utf-8'),
+      path: 'mock.ts',
+    });
   });
 
   api.modifyConfig((config) => {
