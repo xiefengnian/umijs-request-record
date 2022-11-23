@@ -72,7 +72,7 @@ export const startMock = (args?: ArgsType) => {
 
     app.post('*', (req, res) => {
       const { url } = req;
-      const key = `GET ${parse(url).pathname}`;
+      const key = `POST ${parse(url).pathname}`;
       if (mockFile[key]) {
         res.json(mockFile[key]);
       } else {
