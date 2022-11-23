@@ -94,6 +94,7 @@ export default (api: IApi) => {
     return {
       ...config,
       proxy: newProxy,
+      mock: false,
     };
   });
 };
