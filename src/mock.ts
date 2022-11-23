@@ -32,7 +32,7 @@ export class Mock {
       const mockFile = require(join(
         process.cwd(),
         'mock',
-        `requestRecord.mock.jss`
+        `requestRecord.mock.js`
       ));
 
       const app = express();
