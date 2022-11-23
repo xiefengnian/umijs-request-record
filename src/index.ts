@@ -56,7 +56,7 @@ export default (api: IApi) => {
         ...api.userConfig.requestRecord.mock,
       },
       ready: api.name === 'record',
-      role: api.args.role,
+      role: api.args.scene,
     });
 
     const { proxy } = config;
