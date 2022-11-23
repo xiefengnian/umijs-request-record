@@ -113,5 +113,3 @@ export class RequestRecord {
     },
   };
 }
-
-export { Mock } from './mock';

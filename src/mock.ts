@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import { merge } from 'lodash';
 import { join } from 'path';
+import { parse } from 'url';
 
 type ArgsType = { port: number; scene: string };
 
@@ -60,7 +61,8 @@ export const startMock = (args?: ArgsType) => {
 
     app.get('*', (req, res) => {
       const { url } = req;
-      const key = `GET ${url}`;
+
+      const key = `GET ${parse(url).pathname}`;
       if (mockFile[key]) {
         res.json(mockFile[key]);
       } else {
@@ -70,7 +72,7 @@ export const startMock = (args?: ArgsType) => {
 
     app.post('*', (req, res) => {
       const { url } = req;
-      const key = `GET ${url}`;
+      const key = `GET ${parse(url).pathname}`;
       if (mockFile[key]) {
         res.json(mockFile[key]);
       } else {
