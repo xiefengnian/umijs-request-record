@@ -155,10 +155,7 @@ export class Core {
       );
 
       writeFileSync(this.options.mockCachePath, mockContent);
-      writeFileSync(
-        this.options.mockOutputPath,
-        `// from: ${this.options.mockCachePath}\n` + mockContent
-      );
+      writeFileSync(this.options.mockOutputPath, mockContent);
     }
   };
 }
