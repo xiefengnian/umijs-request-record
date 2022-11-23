@@ -1,57 +1,69 @@
-import chokidar from 'chokidar';
+import express from 'express';
 import fs from 'fs';
-import { isAbsolute, join } from 'path';
-import { Core } from './core';
-import { resolePathWithRole } from './utils';
-
-type MockConfig = {
-  /** default: ./mock */
-  mockFileDir: string;
-  /** default: "./types/cache/mock", */
-  mockCacheFileDir: string;
-};
-
+import { join } from 'path';
 export class Mock {
-  private mockData: Record<string, any> = {};
-  private mockFilePath: string;
-  private config: MockConfig;
-  constructor(config?: MockConfig) {
-    const mockFilename = `requestRecord.mock.js`;
-    this.config = {
-      mockFileDir: './mock',
-      mockCacheFileDir: './types/cache/mock',
-      ...(config || {}),
-    };
-    const { mockFileDir } = this.config;
-    const finalMockFileDir = isAbsolute(mockFileDir)
-      ? mockFileDir
-      : join(process.cwd(), mockFileDir);
-    this.mockFilePath = join(finalMockFileDir, mockFilename);
-  }
-
-  private currentRole: string | undefined;
-  private watcher: ReturnType<typeof chokidar.watch> | undefined;
-
-  request = (url: string, method: string) => {
-    return this.mockData[Core.createCacheKey(url, method)];
-  };
-  useRole = (role: string | undefined) => {
-    const { mockCacheFileDir } = this.config;
-    const finalMockCacheFilePath = join(
-      process.cwd(),
-      mockCacheFileDir,
-      resolePathWithRole('./[role].mock.cache.js', role)
-    );
-    if (fs.existsSync(finalMockCacheFilePath)) {
-      if (fs.existsSync(this.mockFilePath)) {
-        fs.unlinkSync(this.mockFilePath);
-      }
-      fs.copyFileSync(finalMockCacheFilePath, this.mockFilePath);
-      this.mockData = require(this.mockFilePath);
-    } else {
-      console.error(
-        `[mock util] mock fail. role "${role}" cache file ${finalMockCacheFilePath} not found.`
-      );
+  static start = (
+    { port, scene }: { port: number; scene: string } = {
+      port: 7000,
+      scene: 'default',
     }
-  };
+  ) =>
+    new Promise<{
+      close: () => void;
+    }>((resolve, reject) => {
+      const cachePath = join(
+        process.cwd(),
+        'types',
+        'cache',
+        'mock',
+        (scene === 'default' ? '' : `${scene}.`) + 'mock.cache.js'
+      );
+
+      if (!fs.existsSync(cachePath)) {
+        reject(new Error(`mock cache file not found: ${cachePath}`));
+        return;
+      }
+
+      fs.copyFileSync(
+        cachePath,
+        join(process.cwd(), 'mock', 'requestRecord.mock.js')
+      );
+
+      const mockFile = require(join(
+        process.cwd(),
+        'mock',
+        `requestRecord.mock.jss`
+      ));
+
+      const app = express();
+      const server = app.listen(port, () => {
+        console.log(
+          '[Request Mock] Mock server is running at http://localhost:%s',
+          port
+        );
+        resolve({
+          close: server.close,
+        });
+      });
+
+      app.get('*', (req, res) => {
+        const { url } = req;
+        const key = `GET ${url}`;
+        if (mockFile[key]) {
+          res.json(mockFile[key]);
+        } else {
+          res.status(404).send(`Mock key ${key} Not Found`);
+        }
+      });
+
+      app.post('*', (req, res) => {
+        const { url } = req;
+        const key = `GET ${url}`;
+        if (mockFile[key]) {
+          res.json(mockFile[key]);
+        } else {
+          res.status(404).send(`Mock key ${key} Not Found`);
+        }
+      });
+    });
 }
