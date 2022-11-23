@@ -15,19 +15,6 @@ const getCachePath = (scene: string) => {
   );
 };
 
-export const switchScene = (newScene: string) =>
-  new Promise((reject, resolve) => {
-    const cachePath = getCachePath(newScene);
-    if (fs.existsSync(cachePath)) {
-      const mockFilePath = join(process.cwd(), 'mock', 'requestRecord.mock.js');
-
-      fs.writeFileSync(mockFilePath, require(cachePath), 'utf-8');
-      resolve();
-    } else {
-      reject(new Error(`mock cache file ${cachePath} not found`));
-    }
-  });
-
 export const startMock = (args?: ArgsType) => {
   const { port, scene } = merge(
     {
