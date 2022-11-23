@@ -1,7 +1,10 @@
+import { address, portfinder } from '@umijs/utils';
 import fs from 'fs';
 import { join } from 'path';
 import type { IApi } from 'umi';
 import { RequestRecord } from './record';
+const DEFAULT_PORT = '8000';
+const DEFAULT_HOST = '0.0.0.0';
 
 export default (api: IApi) => {
   api.describe({
@@ -47,6 +50,16 @@ export default (api: IApi) => {
       content: fs.readFileSync(join(__dirname, '../../src/mock.ts'), 'utf-8'),
       path: '../requestRecordMock.ts',
     });
+  });
+
+  api.modifyAppData(async (memo) => {
+    // 模拟 preset-umi 的 dev 指令的初始化工作
+    memo.port = await portfinder.getPortPromise({
+      port: parseInt(String(process.env.PORT || DEFAULT_PORT), 10),
+    });
+    memo.host = process.env.HOST || DEFAULT_HOST;
+    memo.ip = address.ip();
+    return memo;
   });
 
   api.modifyConfig((config) => {
