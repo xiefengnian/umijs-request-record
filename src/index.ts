@@ -45,7 +45,7 @@ export default (api: IApi) => {
   api.onGenerateFiles(async () => {
     api.writeTmpFile({
       content: fs.readFileSync(join(__dirname, '../../src/mock.ts'), 'utf-8'),
-      path: '../mock.ts',
+      path: '../requestRecordMock.ts',
     });
   });
 
