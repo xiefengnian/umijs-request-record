@@ -63,7 +63,9 @@ export class RequestRecord {
 
     if (initialConfig.ready) {
       console.log(
-        `[Request Record] ready with role=${chalk.green(this.config.getRole())}`
+        `[Request Record] ready with scene=${chalk.green(
+          this.config.getRole()
+        )}`
       );
       this.core.generateMock();
     }

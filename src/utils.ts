@@ -41,6 +41,11 @@ export const JSON2TS = (
             break;
           }
           if (Array.isArray(value)) {
+            if (value.length === 0) {
+              currentObject[key] = 'never[]';
+              break;
+            }
+
             const value0 = value[0];
             if (value0 === null) {
               currentObject[key] = 'null[]';
