@@ -17,7 +17,7 @@ const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
     incomingMessage.on('data', (chunk) => {
       chunks.push(chunk);
     });
-    incomingMessage.on('end', () => {
+    incomingMessage.on('close', () => {
       const body = Buffer.concat(chunks);
       if (options?.contentEncoding) {
         unzip(body, (err, result) => {

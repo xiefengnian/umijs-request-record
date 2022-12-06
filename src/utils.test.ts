@@ -65,6 +65,31 @@ export type API = {
 `.trim()
     );
   });
+
+  it('undefined[]', () => {
+    const result = object2Type(
+      {
+        data: [],
+        success: true,
+        trace_id: 'trace_202211251411564398',
+        user_id: 5578,
+      },
+      { typeName: 'API' }
+    );
+    expect(prettier.format(result, { parser: 'typescript' }).trim()).toEqual(
+      `
+export type API = {
+  data: never[];
+
+  success: boolean;
+
+  trace_id: string;
+
+  user_id: number;
+};    
+`.trim()
+    );
+  });
 });
 
 describe('getType should work fine', () => {
