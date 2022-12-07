@@ -74,7 +74,7 @@ export class Config {
   };
   getTypeFilePath = () => {
     const { outputDir } = this.config;
-    return join(process.cwd(), outputDir, `./index.ts`);
+    return join(process.cwd(), outputDir, `./index.d.ts`);
   };
   getCacheFilePath = () => {
     return join(

@@ -12,7 +12,7 @@ export default (api: IApi) => {
     config: {
       schema(joi) {
         return joi.object({
-          fromProxy: joi.string(),
+          exclude: joi.array(),
           type: joi.boolean(),
           namespace: joi.string(),
           comment: joi.boolean(),
@@ -47,8 +47,18 @@ export default (api: IApi) => {
 
   api.onGenerateFiles(async () => {
     api.writeTmpFile({
-      content: fs.readFileSync(join(__dirname, '../../src/mock.ts'), 'utf-8'),
+      content: fs.readFileSync(
+        join(__dirname, '../../src/runtime/mock.ts'),
+        'utf-8'
+      ),
       path: '../requestRecordMock.ts',
+    });
+    api.writeTmpFile({
+      content: fs.readFileSync(
+        join(__dirname, '../../src/runtime/startMock.js'),
+        'utf-8'
+      ),
+      path: '../startMock.js',
     });
   });
 
@@ -89,7 +99,7 @@ export default (api: IApi) => {
             };
           })
     ).map((args) => {
-      if (args.context === api.userConfig.requestRecord.fromProxy) {
+      if (!api.userConfig.requestRecord.exclude?.includes(args.context)) {
         return {
           ...args,
           onProxyReq: (proxyReq: any, req: any) => {
