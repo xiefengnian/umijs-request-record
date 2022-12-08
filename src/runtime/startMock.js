@@ -1,43 +1,35 @@
-const express = require('express');
-const fs = require('fs');
-const { join } = require('path');
-const { parse } = require('url');
-
-const { scene, port } = process.env;
-
-const getCachePath = (scene) => {
+var express = require('express');
+var fs = require('fs');
+var { join } = require('path');
+var { parse } = require('url');
+var { scene, port } = process.env;
+var getCachePath = (scene2) => {
   return join(
     process.cwd(),
     'types',
     'cache',
     'mock',
-    (scene === 'default' ? '' : `${scene}.`) + 'mock.cache.js'
+    (scene2 === 'default' ? '' : `${scene2}.`) + 'mock.cache.js'
   );
 };
-const cachePath = getCachePath(scene);
-
+var cachePath = getCachePath(scene);
 if (!fs.existsSync(cachePath)) {
   throw new Error(`mock cache file not found: ${cachePath}`);
 }
-
 fs.copyFileSync(
   cachePath,
   join(process.cwd(), 'mock', 'requestRecord.mock.js')
 );
-
-const mockFile = require(join(process.cwd(), 'mock', `requestRecord.mock.js`));
-
-const app = express();
-const server = app.listen(port, () => {
+var mockFile = require(join(process.cwd(), 'mock', `requestRecord.mock.js`));
+var app = express();
+var server = app.listen(port, () => {
   console.log(
     '[Request Mock] Mock server is running at http://localhost:%s',
     port
   );
 });
-
 app.get('*', (req, res) => {
   const { url } = req;
-
   const key = `GET ${parse(url).pathname}`;
   if (mockFile[key]) {
     res.json(mockFile[key]);
@@ -45,7 +37,6 @@ app.get('*', (req, res) => {
     res.status(404).send(`Mock key ${key} Not Found`);
   }
 });
-
 app.post('*', (req, res) => {
   const { url } = req;
   const key = `POST ${parse(url).pathname}`;
@@ -55,7 +46,6 @@ app.post('*', (req, res) => {
     res.status(404).send(`Mock key ${key} Not Found`);
   }
 });
-
 process.on('exit', () => {
   server.close();
 });
