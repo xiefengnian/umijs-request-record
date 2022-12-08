@@ -1,7 +1,7 @@
-import express from 'express';
-import fs from 'fs';
-import { join } from 'path';
-import { parse } from 'url';
+const express = require('express');
+const fs = require('fs');
+const { join } = require('path');
+const { parse } = require('url');
 
 const { scene, port } = process.env;
 
