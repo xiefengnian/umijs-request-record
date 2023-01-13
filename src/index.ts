@@ -35,7 +35,8 @@ export default (api: IApi) => {
         outputDir: './types',
       },
     },
-    enableBy: ({ userConfig }) => !!userConfig.proxy,
+    enableBy: ({ userConfig }) =>
+      !!userConfig.proxy || api.name === 'setup' /** test 时名称为 setup */,
   });
 
   api.registerCommand({
@@ -63,6 +64,7 @@ export default (api: IApi) => {
   });
 
   api.modifyAppData(async (memo) => {
+    if (api.name !== 'record') return memo;
     // 模拟 preset-umi 的 dev 指令的初始化工作
     memo.port = await portfinder.getPortPromise({
       port: parseInt(String(process.env.PORT || DEFAULT_PORT), 10),
@@ -73,6 +75,7 @@ export default (api: IApi) => {
   });
 
   api.modifyConfig((config) => {
+    if (api.name !== 'record') return config;
     const { EventHandler } = new RequestRecord({
       ...api.userConfig.requestRecord,
       mock: {

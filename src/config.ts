@@ -26,7 +26,7 @@ export class Config {
         fileName: 'api.mock.js',
         outputDir: './mock',
       },
-      namespace: 'API',
+      namespace: 'RECORD_API',
       comment: true,
       outputDir: './types',
       ready: true,
