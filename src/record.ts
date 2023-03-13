@@ -1,11 +1,10 @@
-import * as chalk from 'chalk';
-import { parse } from 'url';
-import { unzip } from 'zlib';
-import { Config, ConfigType } from './config';
-import { Core } from './core';
-import './utils';
+import { parse } from "url";
+import { unzip } from "zlib";
+import { Config, ConfigType } from "./config";
+import { Core } from "./core";
+import "./utils";
 
-const PAYLOAD_NAME = '__payload';
+const PAYLOAD_NAME = "__payload";
 
 type ParseBodyOptions = {
   contentEncoding: string;
@@ -14,10 +13,10 @@ type ParseBodyOptions = {
 const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
   new Promise<Record<any, any>>((resolve, reject) => {
     let chunks = [];
-    incomingMessage.on('data', (chunk) => {
+    incomingMessage.on("data", (chunk) => {
       chunks.push(chunk);
     });
-    incomingMessage.on('close', () => {
+    incomingMessage.on("close", () => {
       const body = Buffer.concat(chunks);
       if (options?.contentEncoding) {
         unzip(body, (err, result) => {
@@ -25,7 +24,7 @@ const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
             reject(err);
           } else {
             try {
-              resolve(JSON.parse(result.toString('utf-8')));
+              resolve(JSON.parse(result.toString("utf-8")));
             } catch (error) {
               resolve({});
             }
@@ -34,7 +33,7 @@ const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
         return;
       }
       try {
-        resolve(JSON.parse(body.toString('utf-8')));
+        resolve(JSON.parse(body.toString("utf-8")));
       } catch (error) {
         resolve({});
       }
@@ -44,7 +43,7 @@ const parseBody = (incomingMessage, options?: ParseBodyOptions) =>
 export class RequestRecord {
   private config: Config;
   private core: Core;
-  private successFilter: ConfigType['successFilter'];
+  private successFilter: ConfigType["successFilter"];
   constructor(config: ConfigType) {
     this.config = new Config(config);
     const initialConfig = this.config.getConfig();
@@ -62,26 +61,22 @@ export class RequestRecord {
     this.successFilter = this.config.getSuccessFilter();
 
     if (initialConfig.ready) {
-      console.log(
-        `[Request Record] ready with scene=${chalk.green(
-          this.config.getRole()
-        )}`
-      );
+      console.log(`[Request Record] ready with scene=${this.config.getRole()}`);
       this.core.generateMock();
     }
   }
   EventHandler = {
     onProxyReq: (proxyReq, req) => {
       if (this.config.getConfig().ready) {
-        if (req.headers['content-length']) {
+        if (req.headers["content-length"]) {
           // 表示存在body
         }
-        if ((proxyReq.path as string).includes('?')) {
-          proxyReq.path = proxyReq.path + '&__rid__=' + Math.random();
+        if ((proxyReq.path as string).includes("?")) {
+          proxyReq.path = proxyReq.path + "&__rid__=" + Math.random();
         } else {
-          proxyReq.path = proxyReq.path + '?__rid__=' + Math.random();
+          proxyReq.path = proxyReq.path + "?__rid__=" + Math.random();
         }
-        proxyReq.setHeader('if-none-match', '');
+        proxyReq.setHeader("if-none-match", "");
         parseBody(req).then((body) => {
           req[PAYLOAD_NAME] = body;
         });
@@ -90,7 +85,7 @@ export class RequestRecord {
     onProxyRes: (proxyRes, req, res) => {
       if (this.config.getConfig().ready && res.statusCode !== 304) {
         parseBody(proxyRes, {
-          contentEncoding: proxyRes.headers['content-encoding'],
+          contentEncoding: proxyRes.headers["content-encoding"],
         }).then((responseData) => {
           const method = req.method;
           const pathname = parse(req.url).pathname;
