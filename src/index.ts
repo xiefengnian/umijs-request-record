@@ -1,73 +1,126 @@
-import { parse } from 'url';
-import './utils';
-import { Config, ConfigType } from './config';
-import { Core } from './core';
+import { address, portfinder } from '@umijs/utils';
+import fs from 'fs';
+import { join } from 'path';
+import type { IApi } from 'umi';
+import { RequestRecord } from './record';
+const DEFAULT_PORT = '8000';
+const DEFAULT_HOST = '0.0.0.0';
 
-const PAYLOAD_NAME = '__payload';
+export default (api: IApi) => {
+  api.describe({
+    key: 'requestRecord',
+    config: {
+      schema(joi) {
+        return joi.object({
+          exclude: joi.array(),
+          type: joi.boolean(),
+          namespace: joi.string(),
+          comment: joi.boolean(),
+          outputDir: joi.string(),
+          successFilter: joi.func(),
+          role: joi.string(),
+          mock: joi.object({
+            outputDir: joi.string(),
+            fileName: joi.string(),
+            usingRole: joi.string(),
+          }),
+        });
+      },
+      default: {
+        mock: {
+          outputDir: './mock',
+          fileName: 'requestRecord.mock.js',
+          usingRole: 'default',
+        },
+        outputDir: './types',
+      },
+    },
+    enableBy: ({ userConfig }) =>
+      !!userConfig.proxy || api.name === 'setup' /** test 时名称为 setup */,
+  });
 
-const parseBody = (incomingMessage) =>
-  new Promise<Record<any, any>>((resolve, reject) => {
-    let chunks = [];
-    incomingMessage.on('data', (chunk) => {
-      chunks.push(chunk);
+  api.registerCommand({
+    name: 'record',
+    fn({ args }) {
+      api.service.commands['dev'].fn({ args });
+    },
+  });
+
+  api.onGenerateFiles(async () => {
+    api.writeTmpFile({
+      content: fs.readFileSync(
+        join(__dirname, '../../src/runtime/mock.ts'),
+        'utf-8'
+      ),
+      path: '../requestRecordMock.ts',
     });
-    incomingMessage.on('end', () => {
-      const body = Buffer.concat(chunks).toString();
-      try {
-        resolve(JSON.parse(body));
-      } catch (error) {
-        resolve({});
-      }
+    api.writeTmpFile({
+      content: fs.readFileSync(
+        join(__dirname, '../../src/runtime/startMock.js'),
+        'utf-8'
+      ),
+      path: '../startMock.js',
     });
   });
 
-export default class Main {
-  private config: Config;
-  private core: Core;
-  constructor(config: ConfigType) {
-    this.config = new Config(config);
-    const initialConfig = this.config.getConfig();
-    if (initialConfig.ready) {
-      console.log('>>> start create typescript file');
-    }
-    this.core = new Core({
-      cacheFilePath: this.config.getCacheFilePath(),
-      outputFilePath: this.config.getTypeFilePath(),
-      comment: initialConfig.comment,
-      namespace: initialConfig.namespace,
-      mock: !!initialConfig.mock,
-      mockFilePath: this.config.getMockFilePath(),
+  api.modifyAppData(async (memo) => {
+    if (api.name !== 'record') return memo;
+    // 模拟 preset-umi 的 dev 指令的初始化工作
+    memo.port = await portfinder.getPortPromise({
+      port: parseInt(String(process.env.PORT || DEFAULT_PORT), 10),
     });
-  }
-  EventHandler = {
-    onProxyReq: (proxyReq, req) => {
-      if (this.config.getConfig().ready) {
-        if (req.headers['content-length']) {
-          // 表示存在body
-        }
-        if ((proxyReq.path as string).includes('?')) {
-          proxyReq.path = proxyReq.path + '&__rid__=' + Math.random();
-        } else {
-          proxyReq.path = proxyReq.path + '?__rid__=' + Math.random();
-        }
-        proxyReq.setHeader('if-none-match', '');
-        parseBody(req).then((body) => {
-          req[PAYLOAD_NAME] = body;
-        });
+    memo.host = process.env.HOST || DEFAULT_HOST;
+    memo.ip = address.ip();
+    return memo;
+  });
+
+  api.modifyConfig((config) => {
+    if (api.name !== 'record') return config;
+    const { EventHandler } = new RequestRecord({
+      ...api.userConfig.requestRecord,
+      mock: {
+        ...api.userConfig.requestRecord.mock,
+      },
+      ready: api.name === 'record',
+      role: api.args.scene,
+    });
+
+    const { proxy } = config;
+    // Supported proxy types:
+    // proxy: { target, context }
+    // proxy: { '/api': { target, context } }
+    // proxy: [{ target, context }]
+    const newProxy = (
+      Array.isArray(proxy)
+        ? proxy
+        : proxy.target
+        ? [proxy]
+        : Object.keys(proxy).map((key) => {
+            return {
+              ...proxy[key],
+              context: key,
+            };
+          })
+    ).map((args) => {
+      if (!api.userConfig.requestRecord.exclude?.includes(args.context)) {
+        return {
+          ...args,
+          onProxyReq: (proxyReq: any, req: any) => {
+            EventHandler.onProxyReq(proxyReq, req);
+            args.onProxyReq?.(proxyReq, req);
+          },
+          onProxyRes: (proxyRes: any, req: any, res: any) => {
+            EventHandler.onProxyRes(proxyRes, req, res);
+            args.onProxyRes?.(proxyRes, req, res);
+          },
+        };
       }
-    },
-    onProxyRes: (proxyRes, req, res) => {
-      if (this.config.getConfig().ready && res.statusCode !== 304) {
-        parseBody(proxyRes).then((responseData) => {
-          const method = req.method;
-          const pathname = parse(req.url).pathname;
-          this.core.add(Core.createCacheKey(method, pathname), {
-            res: responseData,
-            query: req.query,
-            payload: req[PAYLOAD_NAME],
-          });
-        });
-      }
-    },
-  };
-}
+      return args;
+    });
+    return {
+      ...config,
+      proxy: newProxy,
+      mock: false,
+    };
+  });
+};

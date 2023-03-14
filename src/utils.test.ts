@@ -1,8 +1,8 @@
-import { getType, object2Type } from './utils';
 import prettier from 'prettier';
+import { getType, object2Type } from './utils';
 
 describe('object 2 type should work fine', () => {
-  xit('should work fine', () => {
+  it('should work fine', () => {
     const result = object2Type(
       {
         a: 1,
@@ -17,6 +17,7 @@ describe('object 2 type should work fine', () => {
           },
         ],
         g: false,
+        h: [],
       },
       {
         typeName: 'Test',
@@ -26,15 +27,21 @@ describe('object 2 type should work fine', () => {
       `
 export type Test = {
   a: number;
+
   b: string;
+
   c: {
     d: string;
     e: number[];
   };
+
   f: {
     ff: string[];
   }[];
+
   g: boolean;
+
+  h: never[];
 };`.trim()
     );
   });
@@ -52,7 +59,33 @@ export type Test = {
       `
 export type API = {
   a: null;
+
   b: null[];
+};    
+`.trim()
+    );
+  });
+
+  it('undefined[]', () => {
+    const result = object2Type(
+      {
+        data: [],
+        success: true,
+        trace_id: 'trace_202211251411564398',
+        user_id: 5578,
+      },
+      { typeName: 'API' }
+    );
+    expect(prettier.format(result, { parser: 'typescript' }).trim()).toEqual(
+      `
+export type API = {
+  data: never[];
+
+  success: boolean;
+
+  trace_id: string;
+
+  user_id: number;
 };    
 `.trim()
     );

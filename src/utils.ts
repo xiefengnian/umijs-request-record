@@ -41,6 +41,11 @@ export const JSON2TS = (
             break;
           }
           if (Array.isArray(value)) {
+            if (value.length === 0) {
+              currentObject[key] = 'never[]';
+              break;
+            }
+
             const value0 = value[0];
             if (value0 === null) {
               currentObject[key] = 'null[]';
@@ -109,4 +114,11 @@ export const getType = (method, pathname, type) => {
     .replace('__', '_')
     .replace(/\./g, '_')
     .toUpperCase();
+};
+
+export const resolePathWithRole = (originPath: string, role?: string) => {
+  if (!role) {
+    return originPath.replace('[role].', '');
+  }
+  return originPath.replace(`[role]`, role);
 };
