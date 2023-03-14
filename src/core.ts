@@ -1,17 +1,16 @@
-import * as chalk from 'chalk';
 import {
   existsSync,
   mkdirSync,
   readFileSync,
   writeFile,
   writeFileSync,
-} from 'fs';
-import { cloneDeep, throttle } from 'lodash';
-import { dirname } from 'path';
-import prettier from 'prettier';
-import { ConfigType } from './config';
-import './utils';
-import { getType, JSON2TS } from './utils';
+} from "fs";
+import { cloneDeep, throttle } from "lodash";
+import { dirname } from "path";
+import prettier from "prettier";
+import { ConfigType } from "./config";
+import "./utils";
+import { getType, JSON2TS } from "./utils";
 
 export type CacheDataType = {
   query: Record<any, any>;
@@ -38,18 +37,18 @@ export class Core {
       comment: boolean;
       namespace: string;
       mock: boolean;
-      role?: ConfigType['role'];
+      role?: ConfigType["role"];
     }
   ) {
     this.cache = JSON.parse(
-      readFileSync(this.options.cacheFilePath, 'utf8') || `{}`
+      readFileSync(this.options.cacheFilePath, "utf8") || `{}`
     );
     if (!existsSync(this.options.mockCachePath)) {
       const mockCacheDir = dirname(this.options.mockCachePath);
       if (!existsSync(mockCacheDir)) {
         mkdirSync(mockCacheDir, { recursive: true });
       }
-      writeFileSync(this.options.mockCachePath, '');
+      writeFileSync(this.options.mockCachePath, "");
     }
   }
 
@@ -67,23 +66,23 @@ export class Core {
       return;
     }
 
-    console.log(`[Request Record] ${chalk.green(`add`)} - ${cacheKey}`);
+    console.log(`[Request Record] 'add' - ${cacheKey}`);
 
     const { query, res, payload } = data;
-    const [method, pathname] = cacheKey.split(' ');
+    const [method, pathname] = cacheKey.split(" ");
     const getInterfaceName = (type) => {
       return getType(method, pathname, type);
     };
     const queryType = JSON2TS(query, {
-      typeName: getInterfaceName('query'),
+      typeName: getInterfaceName("query"),
       comment: this.options.comment,
     });
     const payloadType = JSON2TS(payload, {
-      typeName: getInterfaceName('payload'),
+      typeName: getInterfaceName("payload"),
       comment: this.options.comment,
     });
     const resType = JSON2TS(res, {
-      typeName: getInterfaceName('res'),
+      typeName: getInterfaceName("res"),
       comment: this.options.comment,
     });
 
@@ -91,7 +90,7 @@ export class Core {
 
     const dataWithType: CacheDataWithTypeType = {
       ...data,
-      types: typeComment + queryType + '\n' + payloadType + '\n' + resType,
+      types: typeComment + queryType + "\n" + payloadType + "\n" + resType,
     };
 
     this.cache = {
@@ -124,10 +123,10 @@ export class Core {
       prettier.format(
         `
       export namespace ${this.options.namespace}{
-        ${content.join('\n')}
+        ${content.join("\n")}
       }
     `,
-        { parser: 'typescript' }
+        { parser: "typescript" }
       ),
 
       (err) => {
@@ -143,15 +142,15 @@ export class Core {
     /** mock file */
     if (this.options.mock) {
       const mockContent = prettier.format(
-        'module.exports = {' +
+        "module.exports = {" +
           Object.keys(cache)
             .map((key) => {
               const { res } = cache[key];
               return `'${key}': ${JSON.stringify(res)}`;
             })
-            .join(',\n') +
-          '}',
-        { parser: 'babel' }
+            .join(",\n") +
+          "}",
+        { parser: "babel" }
       );
 
       writeFileSync(this.options.mockCachePath, mockContent);
